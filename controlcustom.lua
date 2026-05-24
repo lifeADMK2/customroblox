@@ -1,134 +1,119 @@
---// MOBILE CONTROL EDITOR
+--// MOBILE CUSTOM CONTROLS
 
 local Players = game:GetService("Players")
+local CAS = game:GetService("ContextActionService")
+local UIS = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
 local player = Players.LocalPlayer
 
+-- Tắt nút mặc định mobile
+pcall(function()
+    StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
+end)
+
+local PlayerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+local Controls = PlayerModule:GetControls()
+Controls:Disable()
+
+-- GUI
 local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Name = "MobileControls"
 gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
---========================
--- SETTINGS
---========================
-
-local jumpSize = 90
-local joystickSize = 140
-
---========================
--- JUMP BUTTON
---========================
-
-local jump = Instance.new("TextButton")
+-- Nút Jump
+local jump = Instance.new("ImageButton")
 jump.Parent = gui
-jump.Size = UDim2.new(0, jumpSize, 0, jumpSize)
+jump.Size = UDim2.new(0, 90, 0, 90)
 jump.Position = UDim2.new(1, -120, 1, -140)
-jump.Text = "JUMP"
-jump.TextScaled = true
-jump.BackgroundColor3 = Color3.fromRGB(170,0,255)
+jump.BackgroundTransparency = 1
+jump.Image = "rbxassetid://6031094678" -- đổi ảnh tại đây
 
-local jc = Instance.new("UICorner")
-jc.CornerRadius = UDim.new(1,0)
-jc.Parent = jump
+local jumpCorner = Instance.new("UICorner")
+jumpCorner.CornerRadius = UDim.new(1,0)
+jumpCorner.Parent = jump
 
---========================
--- JOYSTICK
---========================
+-- Joystick fake
+local moveFrame = Instance.new("Frame")
+moveFrame.Parent = gui
+moveFrame.Size = UDim2.new(0, 140, 0, 140)
+moveFrame.Position = UDim2.new(0, 40, 1, -180)
+moveFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+moveFrame.BackgroundTransparency = 0.3
 
-local joystick = Instance.new("Frame")
-joystick.Parent = gui
-joystick.Size = UDim2.new(0, joystickSize, 0, joystickSize)
-joystick.Position = UDim2.new(0, 40, 1, -180)
-joystick.BackgroundColor3 = Color3.fromRGB(50,50,50)
+local moveCorner = Instance.new("UICorner")
+moveCorner.CornerRadius = UDim.new(1,0)
+moveCorner.Parent = moveFrame
 
-local cc = Instance.new("UICorner")
-cc.CornerRadius = UDim.new(1,0)
-cc.Parent = joystick
+local knob = Instance.new("Frame")
+knob.Parent = moveFrame
+knob.Size = UDim2.new(0, 60, 0, 60)
+knob.Position = UDim2.new(0.5,-30,0.5,-30)
+knob.BackgroundColor3 = Color3.fromRGB(170,0,255)
 
---========================
--- EDIT PANEL
---========================
+local knobCorner = Instance.new("UICorner")
+knobCorner.CornerRadius = UDim.new(1,0)
+knobCorner.Parent = knob
 
-local panel = Instance.new("Frame")
-panel.Parent = gui
-panel.Size = UDim2.new(0, 220, 0, 170)
-panel.Position = UDim2.new(0.5,-110,0.1,0)
-panel.BackgroundColor3 = Color3.fromRGB(20,20,20)
-
-local pc = Instance.new("UICorner")
-pc.CornerRadius = UDim.new(0,15)
-pc.Parent = panel
-
--- TITLE
-local title = Instance.new("TextLabel")
-title.Parent = panel
-title.Size = UDim2.new(1,0,0,30)
-title.BackgroundTransparency = 1
-title.Text = "CONTROL EDITOR"
-title.TextColor3 = Color3.new(1,1,1)
-title.TextScaled = true
-
---========================
--- JUMP SIZE BUTTONS
---========================
-
-local jumpPlus = Instance.new("TextButton")
-jumpPlus.Parent = panel
-jumpPlus.Size = UDim2.new(0,90,0,40)
-jumpPlus.Position = UDim2.new(0,10,0,40)
-jumpPlus.Text = "Jump +"
-
-local jumpMinus = Instance.new("TextButton")
-jumpMinus.Parent = panel
-jumpMinus.Size = UDim2.new(0,90,0,40)
-jumpMinus.Position = UDim2.new(0,120,0,40)
-jumpMinus.Text = "Jump -"
-
---========================
--- JOYSTICK SIZE BUTTONS
---========================
-
-local joyPlus = Instance.new("TextButton")
-joyPlus.Parent = panel
-joyPlus.Size = UDim2.new(0,90,0,40)
-joyPlus.Position = UDim2.new(0,10,0,95)
-joyPlus.Text = "Joy +"
-
-local joyMinus = Instance.new("TextButton")
-joyMinus.Parent = panel
-joyMinus.Size = UDim2.new(0,90,0,40)
-joyMinus.Position = UDim2.new(0,120,0,95)
-joyMinus.Text = "Joy -"
-
---========================
--- FUNCTIONS
---========================
-
-jumpPlus.MouseButton1Click:Connect(function()
-	jumpSize += 10
-	jump.Size = UDim2.new(0, jumpSize, 0, jumpSize)
+-- Jump function
+jump.MouseButton1Down:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.Jump = true
+    end
 end)
 
-jumpMinus.MouseButton1Click:Connect(function()
-	jumpSize -= 10
+-- Move joystick
+local dragging = false
 
-	if jumpSize < 40 then
-		jumpSize = 40
-	end
-
-	jump.Size = UDim2.new(0, jumpSize, 0, jumpSize)
+moveFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+    end
 end)
 
-joyPlus.MouseButton1Click:Connect(function()
-	joystickSize += 10
-	joystick.Size = UDim2.new(0, joystickSize, 0, joystickSize)
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+        knob.Position = UDim2.new(0.5,-30,0.5,-30)
+
+        local char = player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:Move(Vector3.zero)
+        end
+    end
 end)
 
-joyMinus.MouseButton1Click:Connect(function()
-	joystickSize -= 10
+UIS.TouchMoved:Connect(function(input)
+    if dragging then
+        local pos = input.Position
+        local absPos = moveFrame.AbsolutePosition
+        local absSize = moveFrame.AbsoluteSize
 
-	if joystickSize < 60 then
-		joystickSize = 60
-	end
+        local center = absPos + absSize/2
+        local delta = Vector2.new(pos.X, pos.Y) - center
 
-	joystick.Size = UDim2.new(0, joystickSize, 0, joystickSize)
+        local maxDist = 40
+        if delta.Magnitude > maxDist then
+            delta = delta.Unit * maxDist
+        end
+
+        knob.Position = UDim2.new(
+            0.5, delta.X - 30,
+            0.5, delta.Y - 30
+        )
+
+        local moveDir = Vector3.new(
+            delta.X/maxDist,
+            0,
+            delta.Y/maxDist
+        )
+
+        local char = player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:Move(moveDir, true)
+        end
+    end
 end)
+print("done")
