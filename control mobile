@@ -116,3 +116,4 @@ UIS.TouchMoved:Connect(function(input)
         end
     end
 end)
+print("s")
